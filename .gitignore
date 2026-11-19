@@ -1,0 +1,12 @@
+node_modules
+dist
+test-results
+playwright-report
+.env
+.env.*
+!.env.example
+server/.dev.vars
+android/app/build
+android/.gradle
+android/build
+*.keystore
