@@ -14,9 +14,11 @@ export function QuestionMark({ lit, total = 5, size = 120, label }: { lit: numbe
   ];
   return (
     <svg className="qmark" width={size} height={size * 1.25} viewBox="0 0 120 150" role="img" aria-label={label ?? `علامة السؤال: أضاء ${lit} من ${total}`}>
-      {arcs.map((d, i) => (
-        <path key={i} d={d} className={i < lit ? 'seg on' : 'seg'} strokeWidth="14" strokeLinecap="round" fill="none" />
-      ))}
+      <g transform="translate(120 0) scale(-1 1)">
+        {arcs.map((d, i) => (
+          <path key={i} d={d} className={i < lit ? 'seg on' : 'seg'} strokeWidth="14" strokeLinecap="round" fill="none" />
+        ))}
+      </g>
       <circle cx="60" cy="124" r="10" className={segs.length - 1 < lit ? 'seg dot on' : 'seg dot'} />
     </svg>
   );

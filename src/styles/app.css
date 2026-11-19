@@ -42,6 +42,7 @@ html.simple button, html.simple .btn { min-height: 56px; }
 main, header.top, footer { max-width: 1120px; margin: 0 auto; padding: 0 clamp(14px, 4vw, 44px); }
 main:focus { outline: none; }
 h1, h2, h3, p { margin: 0 0 0.6rem; }
+ol { list-style-type: arabic-indic; }
 h1 { font-size: clamp(1.6rem, 4.2vw, 2.6rem); line-height: 1.35; }
 h2 { font-size: clamp(1.25rem, 2.8vw, 1.7rem); line-height: 1.4; }
 h3 { font-size: 1.12rem; }
@@ -286,7 +287,7 @@ legend { font-weight: 700; padding: 0 6px; }
 .coach-backdrop { position: fixed; inset: 0; background: #0b1f1c66; z-index: 60; display: flex; justify-content: flex-start; align-items: flex-end; }
 .coach {
   background: var(--paper); width: min(440px, 100%); max-height: min(88vh, 720px); border-radius: 22px 22px 0 0; margin-inline-start: auto;
-  display: flex; flex-direction: column; padding: 12px 16px calc(14px + var(--safe-b)); box-shadow: 0 -8px 30px #0003; animation: up var(--t) ease-out;
+  display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; padding: 12px 16px calc(14px + var(--safe-b)); box-shadow: 0 -8px 30px #0003; animation: up var(--t) ease-out;
 }
 @keyframes up { from { transform: translateY(24px); opacity: 0; } }
 .coach header { display: flex; justify-content: space-between; align-items: center; }
@@ -339,4 +340,14 @@ html.calm { scroll-behavior: auto; }
   .ages { grid-template-columns: 1fr; }
   .kidchoices { grid-template-columns: 1fr 1fr; }
   .picbtn.big { min-height: 128px; }
+}
+/* Short viewports (phone with the on-screen keyboard open): keep the input and send button reachable */
+@media (max-height: 560px) {
+  .coach { max-height: 100dvh; border-radius: 14px 14px 0 0; padding-top: 6px; }
+  .coach header h2 { font-size: 1rem; }
+  .coach .tabs { margin: 4px 0; }
+  .coach .tabs button { min-height: 40px; padding: 4px 10px; }
+  .coach .log { min-height: 40px; max-height: 22vh; }
+  .coach .mode-note { font-size: 0.78rem; line-height: 1.5; }
+  .coach .row { margin: 4px 0; }
 }

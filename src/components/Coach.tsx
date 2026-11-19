@@ -18,7 +18,7 @@ export function CoachButton() {
   }, [coachOpen]);
   return (
     <>
-      <button ref={btn} type="button" className={`coach-fab ${band === 'a4' ? 'kid' : ''}`} aria-haspopup="dialog" aria-expanded={coachOpen} onClick={() => setCoachOpen(true)}>
+      <button ref={btn} type="button" className={`coach-fab ${band === 'a4' ? 'kid' : ''}`} aria-haspopup="dialog" aria-expanded={coachOpen} aria-label={`مساعدة ${brand.guide}: افتح المساعد`} onClick={() => setCoachOpen(true)}>
         <Robot state="idle" size={band === 'a4' ? 54 : 40} />
         <span>{band === 'a4' ? brand.guide : `مساعدة ${brand.guide}`}</span>
       </button>

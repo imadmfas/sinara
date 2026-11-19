@@ -1,0 +1,14 @@
+# Optional live coach for سِينارة. Deploy with: npx wrangler deploy (from this folder)
+name = "sinara-live-coach"
+main = "src/worker.ts"
+compatibility_date = "2026-06-01"
+
+[vars]
+PROVIDER = "anthropic"          # "anthropic" or "fixture" (tests only)
+MODEL = "claude-haiku-5-5"
+ALLOWED_ORIGIN = "https://imadmfas.github.io"
+SESSION_MINUTES = "30"
+
+# Secrets (never commit): npx wrangler secret put ANTHROPIC_API_KEY
+#                         npx wrangler secret put SESSION_SECRET
+#                         npx wrangler secret put ADULT_ACCESS_CODE

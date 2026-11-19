@@ -88,7 +88,8 @@ export function useLesson(ctx: CoachContext, route: string) {
   const { setCoach, remember } = useApp();
   useEffect(() => {
     setCoach(ctx);
-    remember(route, ctx.title);
+    // Only real activities count for «متابعة من حيث توقفت»; menus and settings do not.
+    if (['kids', 'school', 'branch', 'house', 'followup', 'marshes', 'studio'].includes(ctx.kind)) remember(route, ctx.title);
     stopSpeaking();
     return () => stopSpeaking();
     // eslint-disable-next-line react-hooks/exhaustive-deps

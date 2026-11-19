@@ -10,3 +10,4 @@ android/app/build
 android/.gradle
 android/build
 *.keystore
+dist-e2e
