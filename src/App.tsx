@@ -55,6 +55,7 @@ function Shell() {
           <NavLink to={to.guide()}>دليل البداية</NavLink>
           <NavLink to={to.settings()} aria-label="الإعدادات">⚙︎</NavLink>
         </nav>
+        <CoachButton />
       </header>
       {!online && <p className="offline-banner" role="status">أنت غير متصل. الدروس ومرشد الدرس ومولّد الطلبات تعمل دون اتصال بعد أول تحميل ناجح؛ المحادثة المباشرة تحتاج اتصالاً.</p>}
       <main id="main" ref={main} tabIndex={-1}>
@@ -82,7 +83,6 @@ function Shell() {
         <p>{brand.formalTitle}</p>
         <p>شعارها: «{brand.slogan}» · إعداد {brand.owner}</p>
       </footer>
-      <CoachButton />
     </>
   );
 }

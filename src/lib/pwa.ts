@@ -2,7 +2,7 @@
 import { registerSW } from 'virtual:pwa-register';
 
 export function registerOffline() {
-  if (!('serviceWorker' in navigator) || location.protocol === 'capacitor:' ) return;
+  if (import.meta.env.MODE === 'native' || !('serviceWorker' in navigator)) return;
   const update = registerSW({
     onNeedRefresh() {
       // Progress lives in localStorage and survives updates; offer a calm, explicit refresh.

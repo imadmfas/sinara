@@ -32,7 +32,7 @@ body {
   background: var(--paper);
   color: var(--ink);
   font: var(--fs) / 1.8 'IBM Plex Sans Arabic', Tahoma, 'Segoe UI', Arial, sans-serif;
-  padding-bottom: calc(84px + var(--safe-b));
+  padding-bottom: calc(24px + var(--safe-b));
 }
 html.simple { --fs: 1.22rem; }
 html.simple button, html.simple .btn { min-height: 56px; }
@@ -92,7 +92,7 @@ nav[aria-label='التنقل الرئيس'] a { padding: 8px 12px; border-radius
 nav[aria-label='التنقل الرئيس'] a.active { background: #e5f2e7; color: var(--ink); }
 .offline-banner { max-width: 1120px; margin: 0 auto 8px; background: var(--retry); color: var(--retry-ink); padding: 10px 16px; border-radius: 12px; }
 footer { color: var(--muted); padding-top: 24px; font-size: 0.9rem; }
-.update-bar { position: fixed; inset-inline: 12px; bottom: calc(80px + var(--safe-b)); background: var(--ink); color: #fff; border-radius: 14px; padding: 10px 14px; display: flex; gap: 10px; align-items: center; justify-content: space-between; z-index: 40; }
+.update-bar { position: fixed; inset-inline: 12px; bottom: calc(12px + var(--safe-b)); background: var(--ink); color: #fff; border-radius: 14px; padding: 10px 14px; display: flex; gap: 10px; align-items: center; justify-content: space-between; z-index: 40; }
 
 /* Screens and transitions (RTL-aware: content slides in from the inline start) */
 .screen { animation: enter var(--t) ease-out; }
@@ -273,10 +273,9 @@ legend { font-weight: 700; padding: 0 6px; }
 .concept { border-bottom: 1px solid var(--line); }
 .demo { background: #f7faf7; border-radius: 14px; padding: 10px 14px; margin-bottom: 12px; }
 
-/* فَطين — resting help button: inline-end corner, above the safe area, never over the primary content */
+/* فَطين — rests in a small labelled help button in the header: never over content, keyboard or safe areas */
 .coach-fab {
-  position: fixed; inset-inline-end: 14px; bottom: calc(14px + var(--safe-b)); z-index: 30;
-  border-radius: 40px; padding: 4px 16px 4px 6px; background: #fff; box-shadow: 0 6px 20px #163e3826; border: 2px solid var(--jade); font-weight: 700;
+  border-radius: 40px; padding: 2px 14px 2px 4px; background: #fff; border: 2px solid var(--jade); font-weight: 700; min-height: 48px;
 }
 .coach-fab.kid { padding: 6px 18px 6px 8px; font-size: 1.1rem; }
 .robot .antenna { transform-origin: 32px 10px; }
@@ -330,9 +329,7 @@ html.calm { scroll-behavior: auto; }
   .house-layout { grid-template-columns: 1fr; }
   .plot { max-width: 120px; }
   nav[aria-label='التنقل الرئيس'] a { padding: 6px 9px; font-size: 0.9rem; }
-  .coach-fab span { display: none; }
-  .coach-fab { padding: 4px; }
-  .coach-fab.kid span { display: inline; }
+  .coach-fab span { font-size: 0.9rem; }
 }
 @media (max-width: 380px) {
   .hero { grid-template-columns: 1fr; }

@@ -1,0 +1,7 @@
+{
+  "appId": "iq.sinara.app",
+  "appName": "سِينارة",
+  "webDir": "dist",
+  "android": { "allowMixedContent": false },
+  "ios": { "contentInset": "always" }
+}

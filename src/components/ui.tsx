@@ -4,6 +4,7 @@ import { speak, stopSpeaking, watchVoices, type VoiceState } from '../lib/speech
 import type { Highlight, QuizQuestion, FollowupScenario, SkillId } from '../content/types';
 import { elementLabels } from '../content/index';
 import { Pic } from './Art';
+import { clips } from '../content/audio';
 
 export function Panel({ title, sub, children, id, className = '' }: { title?: ReactNode; sub?: ReactNode; children: ReactNode; id?: string; className?: string }) {
   return (
@@ -193,8 +194,20 @@ export function SpeakButton({ text, label = 'استمع' }: { text: string; labe
   const { settings } = useApp();
   const voice = useVoice();
   const [speaking, setSpeaking] = useState(false);
-  useEffect(() => () => stopSpeaking(), []);
+  const audio = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => () => { stopSpeaking(); audio.current?.pause(); }, []);
   if (!settings.narration) return <span className="readcue">📖 يقرأ المرافق النص بصوته</span>;
+  const clip = clips[text];
+  if (clip) {
+    const play = () => { stopSpeaking(); audio.current?.pause(); audio.current = new Audio(import.meta.env.BASE_URL + clip); audio.current.onended = () => setSpeaking(false); void audio.current.play(); setSpeaking(true); };
+    return (
+      <span className="speak">
+        <button type="button" onClick={play}>🔊 {label}</button>
+        {speaking && <button type="button" onClick={() => { audio.current?.pause(); setSpeaking(false); }}>⏹ إيقاف</button>}
+        <button type="button" onClick={play} aria-label={`أعد ${label}`}>↺</button>
+      </span>
+    );
+  }
   if (voice !== 'available') return <span className="readcue">📖 لا يوجد صوت عربي في هذا الجهاز؛ يقرأ المرافق النص بصوته</span>;
   return (
     <span className="speak">
