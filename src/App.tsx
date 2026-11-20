@@ -3,7 +3,6 @@ import { HashRouter, Link, NavLink, Route, Routes, useLocation } from 'react-rou
 import { AppProvider, useApp } from './lib/app';
 import { brand } from './content/brand';
 import { CoachButton } from './components/Coach';
-import { QuestionMark } from './components/Art';
 import Home from './screens/Home';
 import PathScreen from './screens/PathScreen';
 import KidsScreen from './screens/KidsScreen';
@@ -18,6 +17,9 @@ const StudioScreen = lazy(() => import('./screens/StudioScreen'));
 const GuideScreen = lazy(() => import('./screens/GuideScreen'));
 const ProgressScreen = lazy(() => import('./screens/ProgressScreen'));
 const SettingsScreen = lazy(() => import('./screens/SettingsScreen'));
+const LibraryScreen = lazy(() => import('./screens/LibraryScreen'));
+const TemplateScreen = lazy(() => import('./screens/TemplateScreen'));
+const LabScreen = lazy(() => import('./screens/LabScreen'));
 
 function useOnline() {
   const [on, setOn] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
@@ -45,10 +47,10 @@ function Shell() {
       <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); main.current?.focus(); }}>تخطَّ إلى المحتوى</a>
       <header className="top">
         <Link to={to.home()} className="brand" aria-label={`${brand.platform}: الصفحة الأولى`}>
-          <span className="logo"><QuestionMark lit={5} size={26} label="" /></span>
-          <span><b>{brand.platform}</b><small>{brand.firstPath}</small></span>
+          <img className="brand-lockup" src={`${import.meta.env.BASE_URL}brand/sinara-header-48.png`} srcSet={`${import.meta.env.BASE_URL}brand/sinara-header-96.png 2x, ${import.meta.env.BASE_URL}brand/sinara-header-144.png 3x`} width={192} height={48} alt={brand.platform} />
         </Link>
         <nav aria-label="التنقل الرئيس">
+          <NavLink to={to.library()} className="nav-lib">مكتبة البرومبتات</NavLink>
           <NavLink to={band ? to.path(band) : to.home()}>مساري</NavLink>
           <NavLink to={to.studio()}>مولّد الطلبات</NavLink>
           <NavLink to={to.progress()}>تقدّمي</NavLink>
@@ -74,6 +76,10 @@ function Shell() {
               <Route path="/guide" element={<GuideScreen />} />
               <Route path="/progress" element={<ProgressScreen />} />
               <Route path="/settings" element={<SettingsScreen />} />
+              <Route path="/library" element={<LibraryScreen />} />
+              <Route path="/library/:id" element={<TemplateScreen />} />
+              <Route path="/lab" element={<LabScreen />} />
+              <Route path="/lab/:id" element={<LabScreen />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

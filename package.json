@@ -5,13 +5,15 @@
   "scripts": {
     "dev": "vite",
     "validate": "tsx scripts/validate-content.ts",
-    "build": "npm run validate && tsc -b && vite build",
-    "build:native": "npm run validate && tsc -b && vite build --mode native",
+    "build": "npm run catalog && npm run validate && tsc -b && vite build",
+    "build:native": "npm run catalog && npm run validate && tsc -b && vite build --mode native",
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "cap:sync": "npm run build:native && cap sync",
-    "server:test": "vitest run --root server"
+    "server:test": "vitest run --root server",
+    "catalog": "tsx scripts/build-catalog.ts",
+    "predev": "npm run catalog"
   },
   "keywords": [],
   "author": "",

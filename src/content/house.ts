@@ -89,3 +89,22 @@ export const architectDecisions = [
 
 export const finalPrompt =
   'اقترح توزيعاً أولياً لبيت على أرض أبعادها ١٠ × ٢٠ متراً وشارعها من جهة الشمال، بطابق واحد فيه ثلاث غرف نوم وفناء داخلي. العائلة قد تضيف طابقاً ثانياً لاحقاً، فاحجز مكاناً للدرج وبيّن ما يتغيّر في المساحات. اعرض جدول مساحات تقريبياً يحسب الفناء والممرات، وتأكد أن مجموعه ٢٠٠ متر مربع. اذكر القرارات التي يجب أن يحسمها معماري ومهندس إنشائي محليان، ولا تفترض تعليمات بناء غير مذكورة.';
+
+/** Accepts Arabic-Indic (٠–٩), Extended (۰–۹) and Western digits; returns null when no number is present. */
+export function parseNumber(input: string): number | null {
+  const t = input.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٬,\s]/g, '').replace('٫', '.');
+  const m = t.match(/-?\d+(\.\d+)?/);
+  return m ? Number(m[0]) : null;
+}
+
+/** Second example: a table from "another assistant" whose stated total does not match its rows (rows sum to 194). */
+export const inconsistentRows: AreaRow[] = [
+  { id: 'i-master', name: 'غرفة النوم الرئيسية', area: 16 },
+  { id: 'i-beds', name: 'غرفتا النوم الأخريان', area: 24 },
+  { id: 'i-living', name: 'الصالة والاستقبال', area: 36 },
+  { id: 'i-service', name: 'المطبخ والحمّامان', area: 21 },
+  { id: 'i-circ', name: 'الممرات والجدران', area: 25 },
+  { id: 'i-court', name: 'الفناء', area: 30 },
+  { id: 'i-front', name: 'المساحة الأمامية', area: 42 }
+];
+export const inconsistentStatedTotal = 200;

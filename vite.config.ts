@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'prompt',
         disable: mode === 'native',
-        includeAssets: ['icon.svg', 'icon-192.png', 'icon-512.png'],
+        includeAssets: ['favicon-16.png', 'favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'brand/*.png'],
         manifest: {
           name: 'سِينارة | فنّ السؤال',
           short_name: 'سِينارة',
@@ -23,15 +23,17 @@ export default defineConfig(({ mode }) => {
           scope: '.',
           display: 'standalone',
           background_color: '#faf9f5',
-          theme_color: '#113e39',
+          theme_color: '#023c3c',
           icons: [
             { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
             { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
-            { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+            { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
           ]
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+          globPatterns: ['**/*.{js,css,html,svg,png,woff2}', 'catalog/manifest.json'],
+          // Collection chunks load on demand; visited ones stay available offline. The full download uses its own cache.
+          runtimeCaching: [{ urlPattern: /\/catalog\/c\d+\.json$/, handler: 'StaleWhileRevalidate', options: { cacheName: 'sinara-catalog-runtime', expiration: { maxEntries: 20 } } }],
           navigateFallback: 'index.html',
           cleanupOutdatedCaches: true
         }

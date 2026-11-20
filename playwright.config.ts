@@ -18,7 +18,7 @@ export default defineConfig({
   webServer: [
     { command: 'npx tsx tests/e2e/coach-server.ts', port: 8787, reuseExistingServer: false },
     {
-      command: 'BASE_PATH=/sinara/ VITE_LIVE_COACH_URL=http://localhost:8787 npx vite build --outDir dist-e2e && npx vite preview --outDir dist-e2e --port 4173 --strictPort --base /sinara/',
+      command: 'npm run catalog && BASE_PATH=/sinara/ VITE_LIVE_COACH_URL=http://localhost:8787 npx vite build --outDir dist-e2e && npx vite preview --outDir dist-e2e --port 4173 --strictPort --base /sinara/',
       url: 'http://localhost:4173/sinara/',
       reuseExistingServer: false,
       timeout: 120_000

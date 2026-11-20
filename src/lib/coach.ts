@@ -12,12 +12,14 @@ export interface CoachMaterial {
   why: string;
   next: string[];
   hint?: string;
+  /** Stage-aware first line (used by the preschool story). */
+  opening?: string;
 }
 
 export interface CoachContext {
   key: string;
   title: string;
-  kind: 'home' | 'kids' | 'school' | 'branch' | 'house' | 'followup' | 'studio' | 'guide' | 'marshes' | 'progress' | 'other';
+  kind: 'home' | 'kids' | 'school' | 'branch' | 'house' | 'followup' | 'studio' | 'guide' | 'marshes' | 'progress' | 'library' | 'lab' | 'other';
   lastChoice?: string;
   lastCorrect?: boolean;
   material: CoachMaterial;
@@ -41,6 +43,7 @@ export const kidIntents: { intent: Intent; icon: string; label: string }[] = [
 ];
 
 export function opening(ctx: CoachContext, band: AgeBandId | null): string {
+  if (ctx.material.opening) return ctx.material.opening;
   if (band === 'a4') return `آني ${brand.guide}. نلعب «${ctx.title}». اختر صورة، وأنا أساعدك.`;
   if (band === 'a7' || band === 'a10') return `أنا ${brand.guide}، مرشد الدرس. نحن في «${ctx.title}». اختر سؤالاً تحت، وأجيبك من هذا الدرس.`;
   return `أنا ${brand.guide}، مرشد الدرس. أساعدك في «${ctx.title}»${ctx.lastChoice ? `، وآخر اختيار لك: «${trim(ctx.lastChoice)}»` : ''}. هذه ردود محلية مكتوبة مسبقاً لهذا الدرس.`;

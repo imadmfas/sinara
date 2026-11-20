@@ -3,7 +3,7 @@
 
 export type Gender = 'm' | 'f';
 
-export interface KidChoice { id: string; label: string; icon: string }
+export interface KidChoice { id: string; label: string; icon: string; phrase?: string }
 export interface StoryCharacter extends KidChoice { gender: Gender; definite: string }
 export interface StoryAction extends KidChoice { m: string; f: string }
 
@@ -22,9 +22,10 @@ export const storyCharacters: StoryCharacter[] = [
   { id: 'turtle', label: 'سلحفاة', icon: 'turtle', gender: 'f', definite: 'السلحفاة' }
 ];
 export const storyPlaces: KidChoice[] = [
-  { id: 'palms', label: 'بستان النخيل', icon: 'palms' },
-  { id: 'river', label: 'شاطئ دجلة', icon: 'river' },
-  { id: 'roof', label: 'سطح البيت', icon: 'roof' }
+  // Full Arabic place phrases with the correct preposition.
+  { id: 'palms', label: 'بستان النخيل', icon: 'palms', phrase: 'في بستان النخيل' },
+  { id: 'river', label: 'شاطئ دجلة', icon: 'river', phrase: 'على شاطئ دجلة' },
+  { id: 'roof', label: 'سطح البيت', icon: 'roof', phrase: 'على سطح البيت' }
 ];
 export const storyActions: StoryAction[] = [
   { id: 'sing', label: 'يغنّي', icon: 'sing', m: 'يغنّي', f: 'تغنّي' },
@@ -74,15 +75,61 @@ const closing: Record<string, string> = {
 
 export interface StoryPick { character: string; place: string; action: string }
 
-export function buildStory(p: StoryPick): { request: string; sentences: string[] } {
+const questionVerb = { m: 'ذهب', f: 'ذهبت' };
+export function buildStory(p: StoryPick): { request: string; sentences: string[]; question: string } {
   const c = storyCharacters.find((x) => x.id === p.character)!;
   const pl = storyPlaces.find((x) => x.id === p.place)!;
   const a = storyActions.find((x) => x.id === p.action)!;
   const verb = c.gender === 'm' ? a.m : a.f;
   return {
-    request: `احكِ لي قصة قصيرة من ثلاث جمل عن ${c.label} في ${pl.label} ${verb}.`,
-    sentences: [opening[c.id][pl.id], middle[c.id][a.id], closing[pl.id]]
+    request: `احكِ لي قصة قصيرة من ثلاث جمل عن ${c.label} ${pl.phrase} ${verb}.`,
+    sentences: [opening[c.id][pl.id], middle[c.id][a.id], closing[pl.id]],
+    question: `أين ${questionVerb[c.gender]} ${c.definite} بعد ذلك؟`
   };
+}
+
+/** «شنو نسأل بعدها؟» for the story, fed from the same active story state as the preview and illustration. */
+export function storyFollowup(p: StoryPick) {
+  const c = storyCharacters.find((x) => x.id === p.character)!;
+  const pl = storyPlaces.find((x) => x.id === p.place)!;
+  const a = storyActions.find((x) => x.id === p.action)!;
+  const f = c.gender === 'f';
+  const story = buildStory(p);
+  return {
+    id: `fu-kid-story-${p.character}-${p.place}-${p.action}`,
+    title: `قصة ${c.definite} بلا مكان`,
+    request: `احكِ لي قصة عن ${c.label} ${f ? a.f : a.m}.`,
+    answer: [`${f ? 'كانت' : 'كان'} هناك ${c.label} صغير${f ? 'ة' : ''}.`, middle[c.id][a.id], `${f ? 'ثم نامت' : 'ثم نام'} ${c.definite}.`],
+    omission: `لا نعرف أين ${f ? 'كانت' : 'كان'} ${c.definite}.`,
+    hint: `أين تحب أن ${f ? 'تكون' : 'يكون'} ${c.definite}؟`,
+    options: [
+      { id: 'place', text: pl.label, icon: pl.icon, best: true, feedback: `أحسنت! صار للقصة مكان: ${pl.phrase}.` },
+      { id: 'longer', text: 'قصة أطول', icon: '📏', feedback: `الطول وحده لا يخبرنا أين ${f ? 'كانت' : 'كان'} ${c.definite}.` },
+      { id: 'same', text: 'بلا تغيير', icon: '🔁', feedback: 'لنجرّب أن نضيف شيئاً.' }
+    ],
+    keywords: [],
+    revised: story.sentences,
+    changed: [0, 2],
+    note: `اسأل الطفل: شنو تغيّر بالقصة من ذكرنا المكان؟`
+  };
+}
+
+/** Fatin's spoken line for the current stage of the story activity. */
+export function storyGuideLine(p: Partial<StoryPick>, told: boolean, changed: keyof StoryPick | null): { opening: string; next: string } {
+  const c = storyCharacters.find((x) => x.id === p.character);
+  const pl = storyPlaces.find((x) => x.id === p.place);
+  const missing = (['character', 'place', 'action'] as const).find((k) => !p[k]);
+  if (!told) {
+    if (!c) return { opening: 'آني فَطين. اختر حيواناً من الصور، وأنا أأشر لك عليه 👇', next: 'اختر حيواناً تحبه.' };
+    const what = missing === 'place' ? 'مكاناً' : missing === 'action' ? 'شنو يسوّي' : '';
+    return missing
+      ? { opening: `اخترت ${c.label}. هسه اختر ${what}.`, next: `اختر ${what}.` }
+      : { opening: `كل الصور جاهزة. اضغط «احكِ القصة».`, next: 'اضغط «احكِ القصة».' };
+  }
+  // After the story: name the current animal and place, and offer one meaningful next change.
+  const nextSlot: keyof StoryPick = changed === 'place' ? 'action' : changed === 'action' ? 'character' : 'place';
+  const offer = { place: 'نغيّر المكان', action: `نغيّر شنو ${c?.gender === 'f' ? 'تسوّي' : 'يسوّي'}`, character: 'نغيّر الحيوان' }[nextSlot];
+  return { opening: `قصتنا عن ${c!.definite} ${pl!.phrase}. شنو رأيك ${offer}؟`, next: `${offer} ونشوف شنو يتغيّر.` };
 }
 
 /** Which sentences depend on which slot. Used to highlight the changed part. */
