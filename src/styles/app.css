@@ -348,3 +348,45 @@ html.calm { scroll-behavior: auto; }
   .coach .mode-note { font-size: 0.78rem; line-height: 1.5; }
   .coach .row { margin: 4px 0; }
 }
+
+/* ---- Brand lockup and library entry ---- */
+.brand-lockup { height: 44px; width: auto; display: block; }
+.nav-lib { background: var(--jade); color: #fff !important; }
+nav[aria-label='التنقل الرئيس'] a.nav-lib.active { background: var(--palm); color: #fff; }
+.cards.two { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
+.card.way { border-width: 2px; }
+.card.way b { font-size: 1.15rem; }
+.counts { font-size: 1.15rem; font-weight: 700; color: var(--jade); }
+.lib-results { list-style: none; padding: 0; display: grid; gap: 12px; }
+.lib-card { border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; background: #fff; }
+.lib-card h3:focus { outline: 3px solid var(--focus); }
+.mode-select { max-width: 100%; }
+.more { width: 100%; justify-content: center; margin: 12px 0; }
+.chips.static .chip { background: #f3f6f2; cursor: default; display: inline-block; margin: 2px; font-size: 0.9rem; padding: 4px 12px; border: 1px solid var(--line); border-radius: 30px; }
+.chip.warn { background: var(--retry) !important; color: var(--retry-ink); }
+.chip.suggest { background: #fff6ec; border: 1px dashed #c98544; margin-top: 6px; }
+.tag.mine { background: var(--ok); color: var(--ok-ink); }
+.anatomy { padding-inline-start: 22px; }
+.anatomy li { margin: 8px 0; }
+.anatomy li p { margin: 2px 0 0; }
+.facts li { margin: 6px 0; }
+.mode-links { display: flex; flex-wrap: wrap; gap: 6px 16px; padding-inline-start: 18px; }
+.readiness { background: #fff6ec; border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; border-inline-start: 5px solid #c98544; }
+.readiness.ok { background: var(--ok); border-color: var(--ok-ink); }
+.readiness p { margin: 0 0 4px; }
+.offline progress { width: min(240px, 100%); }
+.second-example { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.lab-list { list-style: none; padding: 0; display: grid; gap: 10px; }
+.pic-changed { display: inline-block; border-radius: 14px; outline: 4px solid var(--lime); background: #f6fbdd; }
+.slotchip.changed { background: var(--lime); }
+.caregiver-q { background: #f4f1e6; border-radius: 10px; padding: 6px 12px; }
+@media (max-width: 640px) {
+  .brand-lockup { height: 36px; }
+  header.top { gap: 6px; padding-top: 6px; }
+  nav[aria-label='التنقل الرئيس'] { order: 3; width: 100%; }
+  nav[aria-label='التنقل الرئيس'] a.nav-lib { order: -1; }
+}
+@media (max-width: 360px) {
+  .brand-lockup { height: 30px; }
+  .coach-fab span { font-size: 0.82rem; }
+}

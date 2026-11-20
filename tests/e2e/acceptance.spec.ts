@@ -38,6 +38,14 @@ test('1. caregiver: 4–6 story without sound, change one choice, zero AI reques
   await page.getByRole('group', { name: 'شنو تغيّر؟' }).getByRole('button', { name: 'المكان' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'أحسنت! غيّرنا المكان' })).toBeVisible();
   await expect(page.getByText('اسأله: شنو تغيّر بالقصة من غيّرنا المكان؟')).toBeVisible();
+  await expect(page.locator('.reqtext')).toContainText('على سطح البيت');
+  await expect(page.locator('.pic-changed')).toHaveCount(1);
+  // The follow-up is fed from the same active story (bird, roof), not a fixed cat example.
+  const fu = page.locator('[data-followup]');
+  await expect(fu).toContainText('عصفور');
+  await expect(fu).not.toContainText('قطة');
+  await fu.getByRole('button', { name: /سطح البيت/ }).click();
+  await expect(fu.locator('.revised')).toContainText('سطح البيت');
   expect(ext, 'no external requests on the preschool path').toEqual([]);
   expect((await hits()).length).toBe(before);
 });
@@ -71,21 +79,34 @@ test('3. adult: house scenario, area check, stairs revision, copy', async ({ pag
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.goto('./#/house');
   for (const d of ['أرض ١٠ × ٢٠ متراً', 'الشارع من جهة الشمال', 'طابق واحد', 'ثلاث غرف نوم', 'فناء داخلي']) await page.getByRole('button', { name: d }).click();
-  await expect(page.locator('.bubble-row.big .qmark')).toHaveAttribute('aria-label', /أضاء 5/);
+  await expect(page.locator('.bubble-row.big .qmark')).toHaveAttribute('aria-label', /أضاء ٥ من ٥/);
   await page.getByLabel(/اطلب جدول مساحات/).check();
   await page.getByRole('button', { name: 'اعرض الجواب التعليمي' }).click();
-  await expect(page.locator('table.areas tfoot')).toContainText('٢٠٠');
-  await page.getByRole('button', { name: /١٩٠/ }).click();
-  await expect(page.locator('.feedback.retry')).toContainText('اجمع مرة ثانية');
-  await page.getByRole('button', { name: /٢٠٠/ }).click();
+  // The total is hidden (visually and from assistive tech) until the first answer.
+  await expect(page.locator('table.areas tfoot')).toHaveCount(0);
+  await expect(page.locator('table.areas tbody tr')).toHaveCount(12);
+  await page.getByLabel('مجموع المساحات بالمتر المربع').fill('190');
+  await page.getByRole('button', { name: 'تحقق', exact: true }).click();
+  await expect(page.locator('.feedback.retry').first()).toContainText('كتبتَ ١٩٠');
+  await expect(page.locator('table.areas tfoot').first()).toContainText('٢٠٠');
+  await page.getByLabel('مجموع المساحات بالمتر المربع').fill('٢٠٠');
+  await page.getByRole('button', { name: 'تحقق', exact: true }).click();
   await expect(page.locator('.feedback.ok').first()).toContainText('١٠ × ٢٠ = ٢٠٠');
+  await page.getByLabel('مجموع المساحات بالمتر المربع').fill('200');
+  await page.getByRole('button', { name: 'تحقق', exact: true }).click();
+  await expect(page.locator('.feedback.ok').first()).toContainText('١٠ × ٢٠ = ٢٠٠');
+  // Second example with an inconsistent total
+  await page.locator('.choice', { hasText: 'سطر الفناء' }).click();
+  await expect(page.locator('.second-example .feedback.retry')).toBeVisible();
+  await page.locator('.choice', { hasText: 'سطر المجموع' }).click();
+  await expect(page.locator('.second-example .feedback.ok')).toContainText('١٩٤');
   await page.getByRole('button', { name: 'تابع' }).click();
   await page.locator('.choice', { hasText: 'ألوان الواجهة' }).click();
   await expect(page.locator('.feedback.retry')).toContainText('مبكر');
   await page.locator('.choice', { hasText: 'أين نحجز مكان الدرج' }).click();
   await page.getByRole('button', { name: 'اعرض التصوّر المعدّل' }).click();
   await expect(page.locator('tr.changed')).toHaveCount(3);
-  await expect(page.locator('table.areas').nth(1)).toContainText('بيت الدرج');
+  await expect(page.locator('table.areas').last()).toContainText('بيت الدرج');
   await page.getByRole('button', { name: 'تحقق من المجموع مرة ثانية' }).click();
   await expect(page.getByText('زاد الدرج ١٠')).toBeVisible();
   await expect(page.getByText('مهندس إنشائي').first()).toBeVisible();
@@ -97,10 +118,10 @@ test('3. adult: house scenario, area check, stairs revision, copy', async ({ pag
 
 test('4. studio: branches differ, service changes fields, missing input and clipboard refusal recover', async ({ page }) => {
   await page.addInitScript(() => { Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('denied')) } }); });
-  await page.goto('./#/studio?field=engineering&branch=architecture');
+  await page.goto('./#/studio?field=engineering&branch=architecture&mode=full');
   await page.getByRole('button', { name: 'ولّد الطلب' }).click();
   const a = await page.locator('#output').inputValue();
-  await page.goto('./#/studio?field=agriculture&branch=irrigation');
+  await page.goto('./#/studio?field=agriculture&branch=irrigation&mode=full');
   await page.reload();
   await page.getByRole('button', { name: 'ولّد الطلب' }).click();
   const b = await page.locator('#output').inputValue();

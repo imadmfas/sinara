@@ -2,6 +2,8 @@
 
 import type { CSSProperties } from 'react';
 
+const toAr = (n: number) => String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[Number(d)]);
+
 /** The brand mark: a question mark whose segments light up as a request gains useful detail. */
 export function QuestionMark({ lit, total = 5, size = 120, label }: { lit: number; total?: number; size?: number; label?: string }) {
   const segs = Array.from({ length: total }, (_, i) => i);
@@ -13,7 +15,7 @@ export function QuestionMark({ lit, total = 5, size = 120, label }: { lit: numbe
     'M66 70 C60 75 60 82 60 92'
   ];
   return (
-    <svg className="qmark" width={size} height={size * 1.25} viewBox="0 0 120 150" role="img" aria-label={label ?? `علامة السؤال: أضاء ${lit} من ${total}`}>
+    <svg className="qmark" width={size} height={size * 1.25} viewBox="0 0 120 150" role="img" aria-label={label ?? `علامة السؤال: أضاء ${toAr(lit)} من ${toAr(total)}`}>
       <g transform="translate(120 0) scale(-1 1)">
         {arcs.map((d, i) => (
           <path key={i} d={d} className={i < lit ? 'seg on' : 'seg'} strokeWidth="14" strokeLinecap="round" fill="none" />

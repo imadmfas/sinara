@@ -30,8 +30,8 @@ describe('prompt builder', () => {
   const base = { service: 'explain', goal: '', audience: '', inputs: '', constraints: '', format: 'جدول', verify: 'بدون خطوة تحقق إضافية', extra: {} };
   it('reports missing task and required fields', () => {
     const b = buildPrompt(base);
-    expect(b.missing).toContain('المهمة');
-    expect(b.missing).toContain('المفهوم');
+    expect(b.missing).toEqual(['المهمة أو المفهوم']);
+    expect(b.next).toContain('الفائدة المركّبة');
   });
   it('asks the assistant to wait when the material is not supplied', () => {
     const b = buildPrompt({ ...base, service: 'summarize', goal: 'تلخيص' });
@@ -65,7 +65,7 @@ describe('guided coach', () => {
 describe('preschool content', () => {
   it('builds a story that uses every choice', () => {
     const s = buildStory({ character: 'cat', place: 'river', action: 'friend' });
-    expect(s.request).toContain('قطة');
+    expect(s.request).toContain('قطة على شاطئ دجلة');
     expect(s.request).toContain('تلعب');
     expect(s.sentences.join(' ')).toContain('دجلة');
     expect(s.sentences.join(' ')).toContain('الأرنب');
@@ -84,5 +84,58 @@ describe('branches', () => {
     const wa = words(a), wb = words(b);
     const shared = [...wa].filter((w) => wb.has(w)).length;
     expect(shared / Math.min(wa.size, wb.size)).toBeLessThan(0.25);
+  });
+});
+
+import { parseNumber, sumAreas, inconsistentRows } from '../../src/content/house';
+import { expandQuery, normalize } from '../../src/lib/catalog';
+import { storyFollowup, storyGuideLine } from '../../src/content/preschool';
+
+describe('house exercise numbers', () => {
+  it('accepts Arabic-Indic, Extended and Western digits', () => {
+    expect(parseNumber('٢٠٠')).toBe(200);
+    expect(parseNumber('200 م²')).toBe(200);
+    expect(parseNumber('۲۰۰')).toBe(200);
+    expect(parseNumber('مية')).toBeNull();
+  });
+  it('the second example is deliberately inconsistent', () => { expect(sumAreas(inconsistentRows)).toBe(194); });
+});
+
+describe('library search', () => {
+  it('normalizes diacritics and hamza forms', () => { expect(normalize('بَيْتٌ أَخْضَر')).toBe(normalize('بيت اخضر')); });
+  it('expands Iraqi aliases', () => {
+    expect(expandQuery('مخطط منزل').flat()).toContain(normalize('خريطة بيت'));
+    expect(expandQuery('حاسبة').flat()).toContain(normalize('حاسوب'));
+    expect(expandQuery('برومبت').flat()).toContain(normalize('طلب'));
+  });
+});
+
+describe('story state', () => {
+  it('follow-up uses the active animal and place', () => {
+    const f = storyFollowup({ character: 'bird', place: 'river', action: 'date' });
+    expect(f.request).toBe('احكِ لي قصة عن عصفور يبحث عن تمرة.');
+    expect(f.options.find((o) => o.best)!.text).toBe('شاطئ دجلة');
+  });
+  it('guide line names the current animal and offers one next change', () => {
+    expect(storyGuideLine({}, false, null).opening).toContain('اختر حيواناً');
+    const l = storyGuideLine({ character: 'turtle', place: 'roof', action: 'sing' }, true, 'place');
+    expect(l.opening).toContain('قصتنا عن السلحفاة على سطح البيت');
+    expect(l.opening).toContain('تسوّي');
+  });
+});
+
+describe('studio: no restating the same content', () => {
+  const base = { goal: '', audience: '', inputs: '', constraints: '', format: 'جدول', verify: 'بدون خطوة تحقق إضافية' };
+  it('a concept alone is enough for «شرح مفهوم»', () => {
+    const b = buildPrompt({ ...base, service: 'explain', extra: { concept: 'الفائدة المركّبة' } });
+    expect(b.missing).toEqual([]);
+    expect(b.text).toContain('مهمتي: أن أفهم الفائدة المركّبة.');
+    expect(b.text.match(/الفائدة المركّبة/g)!.length).toBe(1);
+  });
+  it('a goal alone is enough too, and defaults are not counted as supplied', () => {
+    const b = buildPrompt({ ...base, service: 'explain', goal: 'أن أفهم الكسور', extra: {} });
+    expect(b.missing).toEqual([]);
+    expect(b.supplied).toEqual(['المهمة']);
+    expect(b.next).toContain('الجمهور');
   });
 });

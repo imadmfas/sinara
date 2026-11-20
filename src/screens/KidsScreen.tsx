@@ -20,12 +20,12 @@ export default function KidsScreen() {
   return (
     <>
       <section className="panel kidhead">
-        <p className="eyebrow">٤–٦ سنوات · {fam.name}</p>
+        <p className="eyebrow">{fam.name}، ٤–٦ سنوات</p>
         <h1>{fam.id === 'story' ? 'نصنع قصة معاً' : fam.id === 'drawing' ? 'نرسم معاً' : fam.id === 'counting' ? 'نلعب ونعدّ' : 'نصنع بيتاً من الأشكال'}</h1>
         <p className="caregiver">للكبير المرافق: اقرأ بصوتك ودع الطفل يشير إلى الصورة. لا يحتاج النشاط إلى كتابة أو ميكروفون أو إنترنت.</p>
         <div className="row">
           <SpeakButton text={brand.kidWelcome} label="ترحيب فَطين" />
-          <button type="button" onClick={() => setRound((r) => r + 1)}>↺ جرّب من جديد</button>
+          <button type="button" onClick={() => { try { sessionStorage.removeItem('sinara.kidStory'); } catch { /* ignore */ } setRound((r) => r + 1); }}>↺ جرّب من جديد</button>
           <Link className="btn" to={to.path('a4')}>لعبة أخرى</Link>
         </div>
       </section>
@@ -34,10 +34,12 @@ export default function KidsScreen() {
         {fam.id === 'drawing' && <DrawingGame />}
         {fam.id === 'counting' && <CountingGame />}
         {fam.id === 'shapes' && <ShapesGame />}
-        <section className="panel">
-          <h2>شنو نسأل بعدها؟</h2>
-          <Followup s={preschoolFollowups[fam.id]} lessonKey={`kids-${fam.id}`} kid />
-        </section>
+        {fam.id !== 'story' && (
+          <section className="panel">
+            <h2>شنو نسأل بعدها؟</h2>
+            <Followup s={preschoolFollowups[fam.id]} lessonKey={`kids-${fam.id}`} kid />
+          </section>
+        )}
       </div>
     </>
   );
@@ -48,26 +50,31 @@ const slotTitle: Record<Slot, string> = { character: 'اختر حيواناً', 
 
 function StoryBuilder() {
   const { practise, play, patchCoach } = useApp();
-  const [pick, setPick] = useState<Partial<K.StoryPick>>({});
-  const [story, setStory] = useState<{ pick: K.StoryPick; sentences: string[] } | null>(null);
-  const [prev, setPrev] = useState<{ pick: K.StoryPick; sentences: string[] } | null>(null);
-  const [changedSlot, setChangedSlot] = useState<Slot | null>(null);
+  // One active story state feeds the preview, illustration, story, follow-up and guide. It survives leaving and returning.
+  const saved = (() => { try { return JSON.parse(sessionStorage.getItem('sinara.kidStory') || 'null'); } catch { return null; } })();
+  const [pick, setPick] = useState<Partial<K.StoryPick>>(saved?.pick ?? {});
+  const [story, setStory] = useState<{ pick: K.StoryPick; sentences: string[] } | null>(saved?.story ?? null);
+  const [prev, setPrev] = useState<{ pick: K.StoryPick; sentences: string[] } | null>(saved?.prev ?? null);
+  const [changedSlot, setChangedSlot] = useState<Slot | null>(saved?.changedSlot ?? null);
   const [guess, setGuess] = useState<Slot | null>(null);
+  useEffect(() => { try { sessionStorage.setItem('sinara.kidStory', JSON.stringify({ pick, story, prev, changedSlot })); } catch { /* ignore */ } }, [pick, story, prev, changedSlot]);
   const storyRef = useRef<HTMLDivElement>(null);
   const filled = slotOrder.filter((s) => pick[s]).length;
   const nextSlot = slotOrder.find((s) => !pick[s]);
   const complete = filled === 3;
   const built = complete ? K.buildStory(pick as K.StoryPick) : null;
 
+  const line = K.storyGuideLine(story ? story.pick : pick, !!story, changedSlot);
   const material = {
+    opening: line.opening,
     simpler: 'كل صورة تختارها تغيّر القصة.',
-    example: 'اخترنا القطة وبستان النخيل، فصارت القصة عن قطة تمشي بين النخيل.',
+    example: story ? story.sentences[0] : 'اخترنا القطة وبستان النخيل، فصارت القصة عن قطة تمشي بين النخيل.',
     why: 'القصة تتغيّر لأننا قلنا لها: من، وأين، وماذا يفعل.',
-    next: ['خلّينا نغيّر المكان ونشوف!', 'شنو لو الحيوان يغنّي؟', 'من بطل القصة؟'],
-    hint: nextSlot ? `${slotTitle[nextSlot]}. أنا أشير لك عليه 👇` : story ? 'غيّر صورة واحدة، وشوف شنو يتغيّر بالقصة.' : 'اضغط «احكِ القصة».'
+    next: [line.next],
+    hint: nextSlot ? `${slotTitle[nextSlot]}. أنا أشير لك عليه 👇` : line.next
   };
-  useLesson({ key: 'kids-story', title: 'قصة العصفور والمكان', kind: 'kids', material }, '/kids/story');
-  useEffect(() => { patchCoach({ material }); }, [nextSlot, !!story]); // eslint-disable-line react-hooks/exhaustive-deps
+  useLesson({ key: 'kids-story', title: 'قصة الحيوان والمكان', kind: 'kids', material }, '/kids/story');
+  useEffect(() => { patchCoach({ material }); }, [line.opening, nextSlot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const list = (s: Slot) => (s === 'character' ? K.storyCharacters : s === 'place' ? K.storyPlaces : K.storyActions);
   const choose = (s: Slot, id: string) => {
@@ -104,13 +111,13 @@ function StoryBuilder() {
     <>
       <section className="panel builder">
         <div className="builder-head">
-          <QuestionMark lit={Math.round((filled / 3) * 5)} size={64} label={`اخترت ${filled} من 3`} />
+          <QuestionMark lit={Math.round((filled / 3) * 5)} size={64} label={`اخترت ${K.arabicDigits(filled)} من ٣`} />
           <div className="bubble learner request" aria-live="polite">
             <span className="who">طلبنا</span>
             <p className="pics">
               {slotOrder.map((s) => {
                 const item = list(s).find((x) => x.id === pick[s]);
-                return <span key={s} className={`slotchip ${item ? 'on' : ''}`}>{item ? <><Pic name={item.icon} size={34} />{s === 'action' ? actionLabel(pick) : item.label}</> : '؟'}</span>;
+                return <span key={s} className={`slotchip ${item ? 'on' : ''} ${prev && changedSlot === s ? 'changed' : ''}`}>{item ? <><Pic name={item.icon} size={34} />{s === 'action' ? actionLabel(pick) : item.label}</> : '؟'}</span>;
               })}
             </p>
             {built && <p className="reqtext">{built.request}</p>}
@@ -141,14 +148,15 @@ function StoryBuilder() {
           <h2 id="story-h">القصة <SampleTag /></h2>
           <div className="story-card" ref={storyRef} tabIndex={-1}>
             <div className="story-pics" aria-hidden="true">
-              <Pic name={K.storyPlaces.find((p) => p.id === story.pick.place)!.icon} size={92} />
-              <Pic name={K.storyCharacters.find((c) => c.id === story.pick.character)!.icon} size={92} />
-              <Pic name={K.storyActions.find((a) => a.id === story.pick.action)!.icon} size={64} />
+              <span className={prev && changedSlot === 'place' ? 'pic-changed' : ''}><Pic name={K.storyPlaces.find((p) => p.id === story.pick.place)!.icon} size={92} /></span>
+              <span className={prev && changedSlot === 'character' ? 'pic-changed' : ''}><Pic name={K.storyCharacters.find((c) => c.id === story.pick.character)!.icon} size={92} /></span>
+              <span className={prev && changedSlot === 'action' ? 'pic-changed' : ''}><Pic name={K.storyActions.find((a) => a.id === story.pick.action)!.icon} size={64} /></span>
             </div>
             <ol className="sentences">
               {story.sentences.map((t, i) => <li key={i + t} className={prev && changedIdx.includes(i) ? 'changed' : ''}>{t}{prev && changedIdx.includes(i) && <span className="sr-only"> (تغيّرت)</span>}</li>)}
             </ol>
-            <SpeakButton text={story.sentences.join(' ')} label="اسمع القصة" />
+            <p className="caregiver-q"><b>سؤال للطفل:</b> {K.buildStory(story.pick).question}</p>
+            <SpeakButton text={story.sentences.join(' ') + ' ' + K.buildStory(story.pick).question} label="اسمع القصة" />
           </div>
           {!prev && <p className="caregiver">👆 الآن غيّر صورة واحدة فوق، وشوف شنو يصير بالقصة.</p>}
           {prev && changedSlot && (
@@ -173,6 +181,12 @@ function StoryBuilder() {
           )}
         </section>
       )}
+      <section className="panel">
+        <h2>شنو نسأل بعدها؟</h2>
+        {story
+          ? <Followup s={K.storyFollowup(story.pick)} lessonKey="kids-story" kid />
+          : <p className="caregiver">احكيا القصة أولاً، ثم نجرّب سؤال المتابعة على قصتكما نفسها.</p>}
+      </section>
     </>
   );
 }

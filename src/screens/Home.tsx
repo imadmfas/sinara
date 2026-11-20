@@ -26,6 +26,27 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="panel ways" aria-labelledby="ways-h">
+        <h2 id="ways-h" className="sr-only">طريقان للبدء</h2>
+        <div className="cards two">
+          <a className="card way" href="#ages-h" onClick={(e) => { e.preventDefault(); if (band) nav(to.path(band)); else document.getElementById('ages-h')?.scrollIntoView(); document.querySelector<HTMLElement>('.agecard')?.focus({ preventScroll: true }); }}>
+            <span className="symbol" aria-hidden="true">🌱</span>
+            <b>تعلّم كيف تسأل</b>
+            <small>اختر فئتك العمرية وابدأ أول نشاط الآن، دون تسجيل.</small>
+          </a>
+          <Link className="card way" to={to.library()}>
+            <span className="symbol" aria-hidden="true">📚</span>
+            <b>أحتاج نموذجاً الآن</b>
+            <small>ابحث في مكتبة البرومبتات، وانسخ طلباً جاهزاً أو خصّصه.</small>
+          </Link>
+          <Link className="card way" to={to.lab()}>
+            <span className="symbol" aria-hidden="true">🔁</span>
+            <b>غيّر كلمة، شوف الفرق</b>
+            <small>ستّ تجارب قصيرة: غيّر تعليمة واحدة وقارن الجوابين.</small>
+          </Link>
+        </div>
+      </section>
+
       {resume?.lastRoute && resume.lastRoute !== '/' && (
         <section className="panel resume">
           <h2>متابعة من حيث توقفت</h2>

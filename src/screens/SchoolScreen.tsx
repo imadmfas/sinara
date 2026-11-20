@@ -40,7 +40,7 @@ export default function SchoolScreen() {
   return (
     <div key={round}>
       <section className="panel">
-        <p className="eyebrow">{t.interestName} · {young ? '٧–٩ سنوات' : '١٠–١٢ سنة'}</p>
+        <p className="eyebrow">{t.interestName}، {young ? '٧–٩ سنوات' : '١٠–١٢ سنة'}</p>
         <h1>{t.name}</h1>
         <div className="row">
           <button type="button" onClick={() => { setRound((r) => r + 1); setHint(false); setSolved(false); }}>↺ جرّب من جديد</button>

@@ -21,6 +21,9 @@ function HouseJourney({ restart }: { restart: () => void }) {
   const [withOutput, setWithOutput] = useState(false);
   const [step, setStep] = useState(1); // 1 brief, 2 table, 3 revise, 4 revised, 5 finish
   const [sumGuess, setSumGuess] = useState<number | null>(null);
+  const [sumInput, setSumInput] = useState('');
+  const [sumError, setSumError] = useState('');
+  const [badPick, setBadPick] = useState<string | null>(null);
   const [revisePick, setRevisePick] = useState<string | null>(null);
   const [sum2Checked, setSum2Checked] = useState(false);
   const stepRef = useRef<HTMLDivElement>(null);
@@ -50,6 +53,7 @@ function HouseJourney({ restart }: { restart: () => void }) {
   const lit = Math.min(5, details.length);
 
   const checkSum = (g: number) => {
+    setSumError('');
     setSumGuess(g);
     if (g === H.plotArea) { practise('verify', 'house'); play('chime'); } else play('soft');
   };
@@ -73,7 +77,7 @@ function HouseJourney({ restart }: { restart: () => void }) {
       <Panel title="١. أضف ما يغيّر التوزيع">
         <div className="beforeafter">
           <div className="bubble-row big">
-            <QuestionMark lit={lit} size={80} label={`أضاء ${lit} من ٥ أجزاء`} />
+            <QuestionMark lit={lit} size={80} label={`أضاء ${n(lit)} من ٥ أجزاء`} />
             <div className="bubble learner">
               <span className="who">{details.length ? 'طلبك الآن' : 'الطلب الأول'}</span>
               <p className="prompt-text" aria-live="polite">
@@ -109,23 +113,37 @@ function HouseJourney({ restart }: { restart: () => void }) {
           <Panel title={<>٢. جدول المساحات الأولي <SampleTag /></>} sub="تصوّر للنقاش بطابق واحد. المساحات تقريبية وتشمل الفناء والممرات والجدران.">
             <div className="house-layout">
               <PlotSketch />
-              <AreaTable rows={H.areasV1} />
+              <AreaTable rows={H.areasV1} showTotal={sumGuess !== null} />
             </div>
             <div className="check">
-              <p><b>تحقق قبل أن تعتمد الجدول:</b> كم مجموع عمود المساحة؟ وهل يساوي مساحة الأرض (<bdi>١٠ × ٢٠</bdi>)؟</p>
-              <div className="choices row" role="group" aria-label="مجموع المساحات">
-                {[190, 200, 210].map((g) => (
-                  <button key={g} type="button" className={`choice ${sumGuess === g ? (g === H.plotArea ? 'right' : 'wrong') : ''}`} aria-pressed={sumGuess === g} onClick={() => checkSum(g)}><bdi>{n(g)}</bdi> م²</button>
-                ))}
-              </div>
+              <p><b>تحقق قبل أن تعتمد الجدول:</b> اجمع عمود المساحة بنفسك. هل يساوي مساحة الأرض (<bdi>١٠ × ٢٠</bdi>)؟</p>
+              <form className="row" onSubmit={(e) => { e.preventDefault(); const v = H.parseNumber(sumInput); if (v === null) { setSumError('اكتب رقماً، بالأرقام العربية (٢٠٠) أو الغربية (200).'); return; } checkSum(v); }}>
+                <label htmlFor="sum-in" className="sr-only">مجموع المساحات بالمتر المربع</label>
+                <input id="sum-in" inputMode="numeric" autoComplete="off" value={sumInput} onChange={(e) => { setSumInput(e.target.value); setSumError(''); }} placeholder="المجموع بالمتر المربع" style={{ maxWidth: '14em' }} />
+                <button type="submit" className="action">تحقق</button>
+              </form>
+              {sumError && <p className="feedback retry" role="alert">{sumError}</p>}
               {sumGuess !== null && (
                 <p className={`feedback ${sumGuess === H.plotArea ? 'ok' : 'retry'}`} role="status">
                   {sumGuess === H.plotArea
                     ? <>صحيح. المجموع <bdi>{n(H.sumAreas(H.areasV1))}</bdi> م²، ويساوي <bdi>١٠ × ٢٠ = ٢٠٠</bdi>. لو اختلف المجموع لطلبت من المساعد تصحيح الجدول قبل أي نقاش.</>
-                    : 'اجمع مرة ثانية. ابدأ بغرف النوم، ثم أضف الصالة والاستقبال والمطبخ، ثم الحمّامات والممرات والجدران، ثم الفناء والمساحة الأمامية.'}
+                    : <>كتبتَ <bdi>{n(sumGuess)}</bdi>، والمجموع الصحيح <bdi>{n(H.sumAreas(H.areasV1))}</bdi> م². ابدأ بغرف النوم (<bdi>١٦ + ١٢ + ١٢ = ٤٠</bdi>)، ثم أضف بقية الصفوف واحداً واحداً.</>}
                 </p>
               )}
-              {sumGuess === H.plotArea && step === 2 && <button type="button" className="action" onClick={() => setStep(3)}>تابع</button>}
+              {sumGuess !== null && (
+                <div className="second-example">
+                  <h3>مثال ثانٍ: جدول من مساعد آخر <SampleTag /></h3>
+                  <AreaTable rows={H.inconsistentRows} showTotal statedTotal={H.inconsistentStatedTotal} />
+                  <p><b>أيّ سطر يحتاج إلى تحقق؟</b></p>
+                  <div className="choices" role="group" aria-label="السطر الذي يحتاج تحققاً">
+                    {[['i-court', 'سطر الفناء (٣٠)'], ['total', 'سطر المجموع (٢٠٠)'], ['i-master', 'سطر غرفة النوم الرئيسية (١٦)']].map(([id, label]) => (
+                      <button key={id} type="button" className={`choice ${badPick === id ? (id === 'total' ? 'right' : 'wrong') : ''}`} aria-pressed={badPick === id} onClick={() => { setBadPick(id); if (id === 'total') { practise('verify', 'house'); play('chime'); } else play('soft'); }}>{label}</button>
+                    ))}
+                  </div>
+                  {badPick && <p className={`feedback ${badPick === 'total' ? 'ok' : 'retry'}`} role="status">{badPick === 'total' ? <>صحيح. الصفوف تجمع <bdi>{n(H.sumAreas(H.inconsistentRows))}</bdi> م²، والسطر الأخير يقول ٢٠٠. إما أن المجموع مكتوب خطأً، أو أن صفاً بـ <bdi>٦</bdi> م² سقط من الجدول. اسأل المساعد: «أيّ فضاء نقص؟».</> : 'هذا الرقم معقول وحده. اجمع الصفوف وقارنها بسطر المجموع.'}</p>}
+                </div>
+              )}
+              {sumGuess !== null && badPick === 'total' && step === 2 && <button type="button" className="action" onClick={() => setStep(3)}>تابع</button>}
             </div>
           </Panel>
         </div>
@@ -147,7 +165,7 @@ function HouseJourney({ restart }: { restart: () => void }) {
 
       {step >= 4 && (
         <Panel title={<>٤. التصوّر بعد حجز الدرج <SampleTag /></>} sub="الصفوف الملوّنة تغيّرت: أُضيف بيت الدرج، وصغرت غرفة الاستقبال والمساحة الأمامية حتى يبقى المجموع مساوياً لمساحة الأرض.">
-          <AreaTable rows={H.areasV2} changed={H.changedInV2} before={H.areasV1} />
+          <AreaTable rows={H.areasV2} changed={H.changedInV2} before={H.areasV1} showTotal />
           <div className="row">
             <button type="button" onClick={() => { setSum2Checked(true); practise('verify', 'house'); play('note'); }}>تحقق من المجموع مرة ثانية</button>
             {sum2Checked && <p className="feedback ok" role="status">المجموع <bdi>{n(H.sumAreas(H.areasV2))}</bdi> م². زاد الدرج ١٠، ونقص الاستقبال ٤ والمساحة الأمامية ٦.</p>}
@@ -179,8 +197,8 @@ function renderRequest(text: string, _details: string[], last: string | null) {
   return <>{text.slice(0, i)}<mark className="hl hl-data new">{d.phrase}</mark>{text.slice(i + d.phrase.length)}</>;
 }
 
-function AreaTable({ rows, changed = [], before }: { rows: H.AreaRow[]; changed?: string[]; before?: H.AreaRow[] }) {
-  const total = H.sumAreas(rows);
+function AreaTable({ rows, changed = [], before, showTotal = false, statedTotal }: { rows: H.AreaRow[]; changed?: string[]; before?: H.AreaRow[]; showTotal?: boolean; statedTotal?: number }) {
+  const total = statedTotal ?? H.sumAreas(rows);
   return (
     <table className="areas">
       <caption className="sr-only">جدول المساحات التقريبية بالمتر المربع</caption>
@@ -197,7 +215,8 @@ function AreaTable({ rows, changed = [], before }: { rows: H.AreaRow[]; changed?
           );
         })}
       </tbody>
-      <tfoot><tr><th scope="row">المجموع</th><td><bdi>{n(total)}</bdi></td>{before && <td><bdi>{n(H.sumAreas(before))}</bdi></td>}</tr></tfoot>
+      {/* The aggregate stays out of the page (visually and for assistive technology) until the learner has answered. */}
+      {showTotal && <tfoot><tr><th scope="row">المجموع</th><td><bdi>{n(total)}</bdi></td>{before && <td><bdi>{n(H.sumAreas(before))}</bdi></td>}</tr></tfoot>}
     </table>
   );
 }

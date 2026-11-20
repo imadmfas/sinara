@@ -11,7 +11,11 @@ export const routePatterns = [
   '/studio',
   '/guide',
   '/progress',
-  '/settings'
+  '/settings',
+  '/library',
+  '/library/:id',
+  '/lab',
+  '/lab/:id'
 ] as const;
 
 export const to = {
@@ -26,7 +30,10 @@ export const to = {
   studio: (field?: string, branch?: string) => (field ? `/studio?field=${field}${branch ? `&branch=${branch}` : ''}` : '/studio'),
   guide: () => '/guide',
   progress: () => '/progress',
-  settings: () => '/settings'
+  settings: () => '/settings',
+  library: (q?: string) => (q ? `/library?q=${encodeURIComponent(q)}` : '/library'),
+  template: (id: string) => `/library/${id}`,
+  lab: (id?: string) => (id ? `/lab/${id}` : '/lab')
 };
 
 export function matchesPattern(path: string): boolean {

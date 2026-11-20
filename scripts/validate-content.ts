@@ -12,6 +12,8 @@ import { guideConcepts } from '../src/content/guide';
 import * as house from '../src/content/house';
 import { brand } from '../src/content/brand';
 import { to, matchesPattern } from '../src/routes';
+import { labLessons } from '../src/content/lab';
+import { existsSync, readFileSync } from 'node:fs';
 import type { QuizQuestion, FollowupScenario } from '../src/content/types';
 
 const errors: string[] = [];
@@ -113,9 +115,46 @@ for (const c of preschool.storyCharacters) for (const p of preschool.storyPlaces
   });
 });
 
+// 7b. All 27 story combinations: prepositions, agreement, question and follow-up fed from the same state.
+for (const c of preschool.storyCharacters) for (const p of preschool.storyPlaces) for (const a of preschool.storyActions) {
+  const at = `story ${c.id}/${p.id}/${a.id}`;
+  const st = preschool.buildStory({ character: c.id, place: p.id, action: a.id });
+  if (!st.request.includes(p.phrase!)) err(`${at}: request lacks full place phrase «${p.phrase}»`);
+  if (/في شاطئ|في سطح/.test(st.request)) err(`${at}: wrong preposition in request`);
+  if (!st.request.includes(c.gender === 'f' ? a.f : a.m)) err(`${at}: verb does not agree with the animal`);
+  if (!st.sentences[0].includes(p.label) && !(p.id === 'palms' && st.sentences[0].includes('النخيل'))) err(`${at}: opening sentence does not use the place`);
+  if (!st.sentences[1].includes(c.definite)) err(`${at}: middle sentence does not name the animal`);
+  if (!st.question.includes(c.definite) || !st.question.includes(c.gender === 'f' ? 'ذهبت' : 'ذهب ')) err(`${at}: question agreement`);
+  const fu = preschool.storyFollowup({ character: c.id, place: p.id, action: a.id });
+  if (fu.revised.join() !== st.sentences.join()) err(`${at}: follow-up revised story differs from the active story`);
+  if (!fu.request.includes(c.label) || !fu.options.find((o) => o.best)!.text.includes(p.label)) err(`${at}: follow-up not fed from the active story`);
+  const femVerb = /(كانت|نامت|تكون)/.test(fu.answer.join(' ') + fu.hint + fu.omission);
+  if ((c.gender === 'f') !== femVerb) err(`${at}: follow-up agreement`);
+}
+
+// 7c. Lab lessons: one meaningful edit, a near-miss, an irrelevant change; after = before + the single edit.
+for (const l of labLessons.filter((x) => !x.link)) {
+  if (l.edits.filter((e) => e.correct).length !== 1 || l.edits.length !== 3) err(`lab ${l.id}: needs exactly one correct edit among three`);
+  if (!l.after.prompt.startsWith(l.base.prompt) || !l.after.prompt.includes(l.changed)) err(`lab ${l.id}: after prompt must be the base plus the single edit`);
+  for (const q of [l.predict, l.judge, { options: l.second.options }]) if (q.options.filter((o) => o.correct).length !== 1) err(`lab ${l.id}: a step needs exactly one correct option`);
+  if (!l.second.answer || !l.done || !l.rule) err(`lab ${l.id}: missing withheld answer, rule or completion condition`);
+}
+if (labLessons.length < 6) err('need at least six demonstration lessons');
+
+// 7d. Catalogue manifest (built by scripts/build-catalog.ts): displayed counts are recomputed here.
+if (existsSync('public/catalog/manifest.json')) {
+  const m = JSON.parse(readFileSync('public/catalog/manifest.json', 'utf8'));
+  const vs = m.cases.flatMap((c: { v: unknown[] }) => c.v) as [string, number, string, number][];
+  const usable = vs.filter((v) => v[2] !== 'h').length;
+  if (m.counts.cases !== m.cases.length || m.counts.variants !== vs.length || m.counts.usableVariants !== usable) err('catalogue counts do not match the manifest');
+  for (const c of m.cases as { ages: string[]; id: string }[]) if (c.ages.some((a) => ['a4', 'a7', 'a10'].includes(a))) err(`catalogue case ${c.id} exposed to a child band`);
+  console.log(`catalogue: ${m.counts.cases} cases, ${m.counts.variants} variants, ${usable} usable`);
+} else err('public/catalog/manifest.json missing: run npm run catalog');
+
 // 8. Routes: every content link resolves to a known route pattern.
 const links = [
-  to.home(), to.house(), to.marshes(), to.studio(), to.guide(), to.progress(), to.settings(),
+  to.home(), to.house(), to.marshes(), to.studio(), to.guide(), to.progress(), to.settings(), to.library(), to.library('مخطط منزل'), to.template('SN-021-01'), to.lab(),
+  ...labLessons.map((l) => l.link ?? to.lab(l.id)),
   ...ages.map((a) => to.path(a.id)),
   ...families.map((f) => to.kids(f.id)),
   ...allSchoolTopics.flatMap((t) => [to.school('a7', t.id), to.school('a10', t.id)]),
@@ -138,7 +177,7 @@ function walk(v: unknown, path: string) {
   } else if (Array.isArray(v)) v.forEach((x, i) => walk(x, `${path}[${i}]`));
   else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => walk(x, `${path}.${k}`));
 }
-walk({ fields, schoolInterests, fus, services, guideConcepts, house, brand, marshesProject, ages, preschool }, 'content');
+walk({ fields, schoolInterests, fus, services, guideConcepts, house, brand, marshesProject, ages, preschool, labLessons }, 'content');
 
 warn.forEach((w) => console.warn('warn:', w));
 if (errors.length) {
